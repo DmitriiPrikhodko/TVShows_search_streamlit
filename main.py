@@ -14,6 +14,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import re
+from langchain.embeddings import OpenAIEmbeddings
 
 ROOT_DIR = os.path.dirname(__name__)
 DEVICE = "cpu"
@@ -56,6 +57,7 @@ def format_docs(docs):
 QDRANT_URL = st.secrets["QDRANT_URL"]
 QDRANT_API = st.secrets["QDRANT_API"]
 GROQ_API = st.secrets["GROQ_API"]
+
 # load_dotenv()
 # QDRANT_API = os.getenv("QDRANT_API")
 # QDRANT_URL = os.getenv("QDRANT_URL")
@@ -65,7 +67,7 @@ GROQ_API = st.secrets["GROQ_API"]
 client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API)
 
 # ==== 3. Подключаем коллекцию через LangChain ====
-# embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API)
+
 
 
 model_name = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
@@ -77,13 +79,14 @@ embeddings_model = HuggingFaceEmbeddings(
     model_kwargs=model_kwargs,
     encode_kwargs=encode_kwargs,
 )
+
 vector_store = QdrantVectorStore(
     client=client, collection_name="Shows", embedding=embeddings_model
 )
 
 # ==== 4. Создаем RetrievalQA цепочку ====
 
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API")
+os.environ["GROQ_API_KEY"] = GROQ_API
 
 llm = ChatGroq(model="openai/gpt-oss-120b", temperature=1.2, max_tokens=2000)
 
